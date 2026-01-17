@@ -19,6 +19,44 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v6.0.2
 
+      - name: Get PR number from workflow run
+        id: get_pr
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const { data: prs } = await github.rest.pulls.list({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              head: `${context.repo.owner}:${{ github.event.workflow_run.head_branch }}`,
+              state: 'open'
+            });
+            
+            if (prs.length === 0) {
+              core.setFailed(`No PR found for branch ${{ github.event.workflow_run.head_branch }}`);
+              return;
+            }
+            
+            core.setOutput('pr_number', prs[0].number);
+
+      - name: Create check run
+        id: create_check
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const { data: checkRun } = await github.rest.checks.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              name: 'Test',
+              head_sha: '${{ github.event.workflow_run.head_sha }}',
+              status: 'in_progress',
+              output: {
+                title: 'Test is running',
+                summary: 'Test workflow is executing'
+              }
+            });
+            
+            core.setOutput('check_run_id', checkRun.id);
+
       - name: Sleep for 3 minutes
         run: sleep 180
 
@@ -31,6 +69,29 @@ jobs:
           else
             echo "result=pass" >> $GITHUB_OUTPUT
           fi
+
+      - name: Update check run with result
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const result = '${{ steps.check_result.outputs.result }}';
+            const conclusion = result === 'fail' ? 'failure' : 'success';
+            const title = result === 'fail' ? 'Test failed' : 'Test passed';
+            const summary = result === 'fail' 
+              ? 'Test failed based on test.result.txt content'
+              : 'Test passed successfully';
+            
+            await github.rest.checks.update({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              check_run_id: ${{ steps.create_check.outputs.check_run_id }},
+              status: 'completed',
+              conclusion: conclusion,
+              output: {
+                title: title,
+                summary: summary
+              }
+            });
 
       - name: Pass or fail based on result
         run: |
