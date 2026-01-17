@@ -1,0 +1,41 @@
+#
+# simulates a build workflow
+# this workflow will run when a pull request is created
+# it will sleep for a period of time and then pass or fail based on the content of the build.result.txt file.
+# if there is no build.result.txt file, the workflow will pass.
+#
+
+name: Build
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  build:
+    runs-on: ubuntu-slim
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6.0.2
+
+      - name: Sleep for 3 minutes
+        run: sleep 180
+
+      - name: Check build result
+        id: check_result
+        run: |
+          if [ -f build.result.txt ]; then
+            RESULT=$(cat build.result.txt | tr -d '[:space:]')
+            echo "result=$RESULT" >> $GITHUB_OUTPUT
+          else
+            echo "result=pass" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Pass or fail based on result
+        run: |
+          if [ "${{ steps.check_result.outputs.result }}" = "fail" ]; then
+            echo "Build failed based on build.result.txt content"
+            exit 1
+          else
+            echo "Build passed"
+          fi

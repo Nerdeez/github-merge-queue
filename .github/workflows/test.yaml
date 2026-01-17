@@ -1,0 +1,42 @@
+#
+# The test will run after the build workflow completes
+# it will check the build.result.txt file to determine if the build passed or failed.
+# if the build passed, the test will run and create a check using the GitHub API.
+# if the build failed, the test will not run and the workflow will fail.
+#
+
+name: Test
+
+on:
+  workflow_run:
+    workflows: [Build]
+    types: [completed]
+
+jobs:
+  test:
+    runs-on: ubuntu-slim
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6.0.2
+
+      - name: Sleep for 3 minutes
+        run: sleep 180
+
+      - name: Check test result
+        id: check_result
+        run: |
+          if [ -f test.result.txt ]; then
+            RESULT=$(cat test.result.txt | tr -d '[:space:]')
+            echo "result=$RESULT" >> $GITHUB_OUTPUT
+          else
+            echo "result=pass" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Pass or fail based on result
+        run: |
+          if [ "${{ steps.check_result.outputs.result }}" = "fail" ]; then
+            echo "Test failed based on test.result.txt content"
+            exit 1
+          else
+            echo "Test passed"
+          fi
