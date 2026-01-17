@@ -22,32 +22,40 @@ jobs:
       - name: Get PR number from workflow run
         id: get_pr
         uses: actions/github-script@v8
+        continue-on-error: true
         with:
           script: |
-            const { data: prs } = await github.rest.pulls.list({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              head: `${context.repo.owner}:${{ github.event.workflow_run.head_branch }}`,
-              state: 'open'
-            });
-            
-            if (prs.length === 0) {
-              core.setFailed(`No PR found for branch ${{ github.event.workflow_run.head_branch }}`);
+            const headBranch = github.event.workflow_run.head_branch;
+            // Skip PR lookup for merge group branches (they're temporary branches)
+            if (headBranch.startsWith('gh-readonly-queue/')) {
+              core.setOutput('pr_number', '');
               return;
             }
             
-            core.setOutput('pr_number', prs[0].number);
+            const { data: prs } = await github.rest.pulls.list({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              head: `${context.repo.owner}:${headBranch}`,
+              state: 'open'
+            });
+            
+            if (prs.length > 0) {
+              core.setOutput('pr_number', prs[0].number);
+            } else {
+              core.setOutput('pr_number', '');
+            }
 
       - name: Create check run
         id: create_check
         uses: actions/github-script@v8
         with:
           script: |
+            const headSha = github.event.workflow_run.head_sha;
             const { data: checkRun } = await github.rest.checks.create({
               owner: context.repo.owner,
               repo: context.repo.repo,
               name: 'Test',
-              head_sha: '${{ github.event.workflow_run.head_sha }}',
+              head_sha: headSha,
               status: 'in_progress',
               output: {
                 title: 'Test is running',
