@@ -25,8 +25,8 @@ jobs:
         with:
           script: |
             let isQueue = false;
-            if (github.event && github.event.workflow_run && github.event.workflow_run.head_branch) {
-              const headBranch = github.event.workflow_run.head_branch;
+            if (context.payload && context.payload.workflow_run && context.payload.workflow_run.head_branch) {
+              const headBranch = context.payload.workflow_run.head_branch;
               isQueue = headBranch.startsWith('gh-readonly-queue/');
               core.info(`Branch: ${headBranch}, Is merge queue: ${isQueue}`);
             }
@@ -40,12 +40,12 @@ jobs:
         continue-on-error: true
         with:
           script: |
-            if (!github.event || !github.event.workflow_run) {
+            if (!context.payload || !context.payload.workflow_run) {
               core.setOutput('pr_number', '');
               return;
             }
             
-            const headBranch = github.event.workflow_run.head_branch;
+            const headBranch = context.payload.workflow_run.head_branch;
             core.info(`Head branch: ${headBranch}`);
             core.debug(`Branch type: ${typeof headBranch}`);
             
@@ -80,27 +80,17 @@ jobs:
         uses: actions/github-script@v8
         with:
           script: |
-            // Debug: Log event structure
-            core.info(`github object exists: ${!!github}`);
-            core.info(`github.event_name: ${github.event_name}`);
-            core.info(`github.event exists: ${!!github.event}`);
-            core.info(`github.event type: ${typeof github.event}`);
-            
-            if (github.event) {
-              core.debug(`Event keys: ${JSON.stringify(Object.keys(github.event))}`);
-            }
-            
-            if (!github.event) {
-              core.setFailed('github.event is undefined. Available github properties: ' + JSON.stringify(Object.keys(github || {})));
+            if (!context.payload) {
+              core.setFailed('context.payload is undefined');
               return;
             }
             
-            if (!github.event.workflow_run) {
-              core.setFailed('workflow_run event data is missing. Event structure: ' + JSON.stringify(github.event, null, 2));
+            if (!context.payload.workflow_run) {
+              core.setFailed('workflow_run event data is missing in payload: ' + JSON.stringify(context.payload, null, 2));
               return;
             }
             
-            const headSha = github.event.workflow_run.head_sha;
+            const headSha = context.payload.workflow_run.head_sha;
             if (!headSha) {
               core.setFailed('head_sha is missing from workflow_run event');
               return;
