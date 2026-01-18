@@ -19,64 +19,8 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v6.0.2
 
-      - name: Check if running from merge queue
-        id: is_merge_queue
-        uses: actions/github-script@v8
-        with:
-          script: |
-            let isQueue = false;
-            if (context.payload && context.payload.workflow_run && context.payload.workflow_run.head_branch) {
-              const headBranch = context.payload.workflow_run.head_branch;
-              isQueue = headBranch.startsWith('gh-readonly-queue/');
-              core.info(`Branch: ${headBranch}, Is merge queue: ${isQueue}`);
-            }
-            core.setOutput('is_merge_queue', isQueue);
-            core.info(`Running from merge queue: ${isQueue}`);
-
-      - name: Get PR number from workflow run
-        id: get_pr
-        if: steps.is_merge_queue.outputs.is_merge_queue != 'true'
-        uses: actions/github-script@v8
-        continue-on-error: true
-        with:
-          script: |
-            if (!context.payload || !context.payload.workflow_run) {
-              core.setOutput('pr_number', '');
-              return;
-            }
-            
-            const headBranch = context.payload.workflow_run.head_branch;
-            core.info(`Head branch: ${headBranch}`);
-            core.debug(`Branch type: ${typeof headBranch}`);
-            
-            if (!headBranch) {
-              core.info('No head branch found, skipping PR lookup');
-              core.setOutput('pr_number', '');
-              return;
-            }
-            
-            core.info(`Looking up PR for branch: ${headBranch}`);
-            
-            const { data: prs } = await github.rest.pulls.list({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              head: `${context.repo.owner}:${headBranch}`,
-              state: 'open'
-            });
-            
-            core.info(`Found ${prs.length} PR(s) for branch: ${headBranch}`);
-            
-            if (prs.length > 0) {
-              core.info(`Using PR #${prs[0].number}`);
-              core.setOutput('pr_number', prs[0].number);
-            } else {
-              core.info('No PR found, setting pr_number to empty');
-              core.setOutput('pr_number', '');
-            }
-
       - name: Create check run
         id: create_check
-        if: steps.is_merge_queue.outputs.is_merge_queue != 'true'
         uses: actions/github-script@v8
         with:
           script: |
@@ -99,7 +43,7 @@ jobs:
             const { data: checkRun } = await github.rest.checks.create({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              name: 'Test',
+              name: 'E2E Check',
               head_sha: headSha,
               status: 'in_progress',
               output: {
@@ -124,7 +68,6 @@ jobs:
           fi
 
       - name: Update check run with result
-        if: steps.is_merge_queue.outputs.is_merge_queue != 'true'
         uses: actions/github-script@v8
         with:
           script: |
