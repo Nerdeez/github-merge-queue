@@ -2,6 +2,7 @@
 # Github Merge Queue Example
 
 This repository is an example of github merge queue integration.
+View the full lesson at academeez.com
 
 ## The problem
 
