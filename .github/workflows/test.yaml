@@ -81,11 +81,17 @@ jobs:
         with:
           script: |
             // Debug: Log event structure
-            core.debug(`Event type: ${github.event_name}`);
-            core.debug(`Event keys: ${JSON.stringify(Object.keys(github.event || {}))}`);
+            core.info(`github object exists: ${!!github}`);
+            core.info(`github.event_name: ${github.event_name}`);
+            core.info(`github.event exists: ${!!github.event}`);
+            core.info(`github.event type: ${typeof github.event}`);
+            
+            if (github.event) {
+              core.debug(`Event keys: ${JSON.stringify(Object.keys(github.event))}`);
+            }
             
             if (!github.event) {
-              core.setFailed('github.event is undefined');
+              core.setFailed('github.event is undefined. Available github properties: ' + JSON.stringify(Object.keys(github || {})));
               return;
             }
             
