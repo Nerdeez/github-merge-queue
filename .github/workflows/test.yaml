@@ -8,9 +8,12 @@
 name: Test
 
 on:
-  workflow_run:
-    workflows: [Build]
-    types: [completed]
+  workflow_dispatch:
+    inputs:
+      commit_sha:
+        description: 'The commit SHA to test'
+        required: true
+        type: string
 
 jobs:
   test:
@@ -18,33 +21,19 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v6.0.2
+        with:
+          ref: ${{ inputs.commit_sha }}
 
       - name: Create check run
         id: create_check
         uses: actions/github-script@v8
         with:
           script: |
-            if (!context.payload) {
-              core.setFailed('context.payload is undefined');
-              return;
-            }
-            
-            if (!context.payload.workflow_run) {
-              core.setFailed('workflow_run event data is missing in payload: ' + JSON.stringify(context.payload, null, 2));
-              return;
-            }
-            
-            const headSha = context.payload.workflow_run.head_sha;
-            if (!headSha) {
-              core.setFailed('head_sha is missing from workflow_run event');
-              return;
-            }
-            
             const { data: checkRun } = await github.rest.checks.create({
               owner: context.repo.owner,
               repo: context.repo.repo,
               name: 'E2E Check',
-              head_sha: headSha,
+              head_sha: context.payload.inputs.commit_sha,
               status: 'in_progress',
               output: {
                 title: 'Test is running',
