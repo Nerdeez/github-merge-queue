@@ -1,5 +1,5 @@
 
-# Github Merge Queue Example 11111
+# Github Merge Queue Example 22222
 
 This repository is an example of github merge queue integration.
 View the full lesson at academeez.com
