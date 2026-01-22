@@ -1,8 +1,7 @@
 #
-# The test will run after the build workflow completes
-# it will check the build.result.txt file to determine if the build passed or failed.
-# if the build passed, the test will run and create a check using the GitHub API.
-# if the build failed, the test will not run and the workflow will fail.
+# the build workflow will call this workflow with the commit sha of the head commit of the pr.
+# it will check the test.result.txt file to determine if the test passed or failed.
+# it will create a check on head commit of the pr with the result.
 #
 
 name: Test
