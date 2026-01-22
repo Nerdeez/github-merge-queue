@@ -40,3 +40,22 @@ jobs:
           else
             echo "Build passed"
           fi
+
+      - name: Call test workflow
+        if: success()
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const ref = context.payload.pull_request
+              ? context.payload.pull_request.head.ref
+              : context.ref;
+
+            await github.rest.actions.createWorkflowDispatch({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: 'test.yaml',
+              ref: ref,
+              inputs: {
+                commit_sha: context.sha
+              }
+            });
