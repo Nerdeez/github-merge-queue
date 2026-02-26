@@ -10,7 +10,6 @@ name: Build
 on:
   pull_request:
     types: [opened, synchronize, reopened]
-  merge_group:
 
 jobs:
   build:
