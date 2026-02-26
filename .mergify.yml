@@ -5,8 +5,8 @@ queue_rules:
     max_check_retries: 2
     autoqueue: true
     queue_conditions:
-      - check-success =E2E Check
-      - check-success =Build / build
+      - check-success = E2E Check
+      - check-success = build
     name: default
 
 pull_request_rules:
