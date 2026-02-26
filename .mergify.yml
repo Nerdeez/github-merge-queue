@@ -1,0 +1,10 @@
+queue_rules:
+  - branch_protection_injection_mode: queue
+    batch_size: 1
+    batch_max_wait_time: "30 seconds"    
+    max_check_retries: 2    
+    autoqueue: true
+    queue_conditions:
+      - check-success = test
+      - check-success =Build / build
+    name: default
