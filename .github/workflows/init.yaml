@@ -1,0 +1,25 @@
+name: Initialize Checks
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  init:
+    runs-on: ubuntu-slim
+    steps:
+      - name: Create pending E2E Check
+        uses: actions/github-script@v8
+        with:
+          script: |
+            await github.rest.checks.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              name: 'E2E Check',
+              head_sha: context.payload.pull_request.head.sha,
+              status: 'in_progress',
+              output: {
+                title: 'Waiting for build...',
+                summary: 'E2E tests will run after build succeeds'
+              }
+            });

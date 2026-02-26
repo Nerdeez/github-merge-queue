@@ -1,7 +1,8 @@
 #
-# the build workflow will call this workflow with the commit sha of the head commit of the pr.
-# it will check the test.result.txt file to determine if the test passed or failed.
-# it will create a check on head commit of the pr with the result.
+# The build workflow calls this workflow with the commit sha of the head commit of the PR.
+# The E2E Check is created by the init workflow when the PR is opened; this workflow
+# updates that same check. It reads test.result.txt to determine pass/fail and updates
+# the check on the PR head commit with the result.
 #
 
 name: Test
@@ -23,24 +24,32 @@ jobs:
         with:
           ref: ${{ inputs.commit_sha }}
 
-      - name: Create check run
-        id: create_check
+      - name: Get and update existing E2E check
+        id: get_check
         uses: actions/github-script@v8
         with:
           script: |
-            const { data: checkRun } = await github.rest.checks.create({
+            const commitSha = context.payload.inputs.commit_sha;
+            const { data: { check_runs } } = await github.rest.checks.listForRef({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              name: 'E2E Check',
-              head_sha: context.payload.inputs.commit_sha,
+              ref: commitSha
+            });
+            const e2eCheck = check_runs.find(run => run.name === 'E2E Check');
+            if (!e2eCheck) {
+              throw new Error('E2E Check not found for this commit. Ensure the init workflow has run for this PR.');
+            }
+            core.setOutput('check_run_id', e2eCheck.id);
+            await github.rest.checks.update({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              check_run_id: e2eCheck.id,
               status: 'in_progress',
               output: {
                 title: 'Test is running',
                 summary: 'Test workflow is executing'
               }
             });
-            
-            core.setOutput('check_run_id', checkRun.id);
 
       - name: Sleep for 3 minutes
         run: sleep 180
@@ -69,7 +78,7 @@ jobs:
             await github.rest.checks.update({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              check_run_id: ${{ steps.create_check.outputs.check_run_id }},
+              check_run_id: ${{ steps.get_check.outputs.check_run_id }},
               status: 'completed',
               conclusion: conclusion,
               output: {
