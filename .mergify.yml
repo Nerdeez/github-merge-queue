@@ -8,3 +8,11 @@ queue_rules:
       - check-success =E2E Check
       - check-success =Build / build
     name: default
+
+pull_request_rules:
+  - name: Add to queue when labeled
+    conditions:
+      - base=main
+    actions:
+      queue:
+        name: default
