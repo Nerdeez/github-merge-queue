@@ -19,6 +19,16 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v6.0.2
 
+      - name: Simulate merge queue failure for PR 30 (ruleset test)
+        if: github.event_name == 'merge_group'
+        run: |
+          HEAD_REF="${{ github.event.merge_group.head_ref }}"
+          PR_NUM=$(echo "$HEAD_REF" | sed -n 's/.*pr-\([0-9]*\)-.*/\1/p')
+          echo "Extracted PR number: $PR_NUM (from head_ref: $HEAD_REF)"
+          if [ "$PR_NUM" = "32" ]; then
+            exit 1
+          fi
+
       - name: Sleep for 3 minutes
         run: sleep 180
 
