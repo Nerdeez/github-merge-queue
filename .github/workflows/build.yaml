@@ -18,54 +18,23 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v6.0.2
+        
+      - name: Print event context
+        run: |
+          echo "Event name: ${{ github.event_name }}"
+          echo "Full context:"
+          echo '${{ toJson(github) }}'      
 
+      - name: Sleep for 3 minutes
+        run: sleep 180
+        
       - name: Simulate merge queue failure for PR 30 (ruleset test)
         if: github.event_name == 'merge_group'
         run: |
           HEAD_REF="${{ github.event.merge_group.head_ref }}"
           PR_NUM=$(echo "$HEAD_REF" | sed -n 's/.*pr-\([0-9]*\)-.*/\1/p')
           echo "Extracted PR number: $PR_NUM (from head_ref: $HEAD_REF)"
-          if [ "$PR_NUM" = "32" ]; then
+          if [ "$PR_NUM" = "34" ]; then
             exit 1
           fi
-
-      - name: Sleep for 3 minutes
-        run: sleep 180
-
-      - name: Check build result
-        id: check_result
-        run: |
-          if [ -f build.result.txt ]; then
-            RESULT=$(cat build.result.txt | tr -d '[:space:]')
-            echo "result=$RESULT" >> $GITHUB_OUTPUT
-          else
-            echo "result=pass" >> $GITHUB_OUTPUT
-          fi
-
-      - name: Pass or fail based on result
-        run: |
-          if [ "${{ steps.check_result.outputs.result }}" = "fail" ]; then
-            echo "Build failed based on build.result.txt content"
-            exit 1
-          else
-            echo "Build passed"
-          fi
-
-      - name: Call test workflow
-        if: success()
-        uses: actions/github-script@v8
-        with:
-          script: |
-            const ref = context.payload.pull_request
-              ? context.payload.pull_request.head.ref
-              : context.ref;
-
-            await github.rest.actions.createWorkflowDispatch({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              workflow_id: 'test.yaml',
-              ref: ref,
-              inputs: {
-                commit_sha: context.sha
-              }
-            });
+      
