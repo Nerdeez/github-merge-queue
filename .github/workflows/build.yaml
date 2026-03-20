@@ -23,12 +23,43 @@ jobs:
         run: |
           echo "Event name: ${{ github.event_name }}"
           echo "Full context:"
-          echo '${{ toJson(github) }}'      
+          echo '${{ toJson(github) }}'
+
+      - name: Print merge queue stacking info
+        if: github.event_name == 'merge_group'
+        run: |
+          echo "========================================"
+          echo "=== MERGE GROUP REFS ==="
+          echo "My temp branch : ${{ github.ref }}"
+          echo "My base_ref    : ${{ github.event.merge_group.base_ref }}"
+          echo "My head_ref    : ${{ github.event.merge_group.head_ref }}"
+          echo "My sha         : ${{ github.sha }}"
+          echo ""
+          echo "=== GIT LOG (last 10 commits) ==="
+          git log --oneline -10
+          echo ""
+          echo "=== GIT LOG WITH GRAPH ==="
+          git log --oneline --graph --decorate -10
+          echo ""
+          echo "=== WORKSPACE FILES ==="
+          ls -la
+          echo ""
+          echo "=== PR FILES (pr-*.txt) ==="
+          if ls pr-*.txt 2>/dev/null; then
+            echo "Found PR marker files:"
+            for f in pr-*.txt; do
+              echo "--- $f ---"
+              cat "$f"
+            done
+          else
+            echo "No pr-*.txt files found"
+          fi
+          echo "========================================"
 
       - name: Sleep for 3 minutes
         run: sleep 180
         
-      - name: Simulate merge queue failure for PR 30 (ruleset test)
+      - name: Simulate merge queue failure for PR 34
         if: github.event_name == 'merge_group'
         run: |
           HEAD_REF="${{ github.event.merge_group.head_ref }}"
@@ -37,4 +68,3 @@ jobs:
           if [ "$PR_NUM" = "34" ]; then
             exit 1
           fi
-      
