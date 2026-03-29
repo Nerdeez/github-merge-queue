@@ -65,6 +65,6 @@ jobs:
           HEAD_REF="${{ github.event.merge_group.head_ref }}"
           PR_NUM=$(echo "$HEAD_REF" | sed -n 's/.*pr-\([0-9]*\)-.*/\1/p')
           echo "Extracted PR number: $PR_NUM (from head_ref: $HEAD_REF)"
-          if [ "$PR_NUM" = "34" ]; then
+          if [ "$PR_NUM" = "41" ]; then
             exit 1
           fi
