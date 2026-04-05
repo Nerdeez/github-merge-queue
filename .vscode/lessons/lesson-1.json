@@ -1,0 +1,39 @@
+{
+  "id": 1,
+  "title": "Merge Queue",
+  "notes": [
+    {
+      "type": "code",
+      "file": ".github/workflows/build.yaml",
+      "ranges": [
+        [
+          0,
+          18
+        ]
+      ],
+      "markdown": "github actions workflow\n\nworkflow is a container jobs\n\nworkflow has a trigger"
+    },
+    {
+      "type": "code",
+      "file": ".github/workflows/build.yaml",
+      "ranges": [
+        [
+          9,
+          10
+        ]
+      ],
+      "markdown": "the pull_request trigger is also creating \na check"
+    },
+    {
+      "type": "code",
+      "file": ".github/workflows/build.yaml",
+      "ranges": [
+        [
+          10,
+          10
+        ]
+      ],
+      "markdown": "this trigger means run this workflow\nalso in the merge queue"
+    }
+  ]
+}

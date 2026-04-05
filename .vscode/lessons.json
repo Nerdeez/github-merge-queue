@@ -1,0 +1,9 @@
+{
+  "activeLessonId": 1,
+  "lessons": [
+    {
+      "id": 1,
+      "title": "Merge Queue"
+    }
+  ]
+}
