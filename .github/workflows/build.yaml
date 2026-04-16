@@ -16,4 +16,4 @@ jobs:
     runs-on: ubuntu-slim
     steps:      
       - name: Sleep for 3 minutes
-        run: sleep 180
+        run: sleep 540
