@@ -21,4 +21,4 @@ jobs:
 
       - name: Pass immediately for pull request
         if: ${{ github.event_name == 'pull_request' }}
-        run: echo "Pull request event: passing immediately"
+        run: echo "Pull request event passing immediately"
